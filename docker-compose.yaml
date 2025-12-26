@@ -1,0 +1,169 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - news-net
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: news_save_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d news_save_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - news-net
+
+  kafka:
+    image: apache/kafka:latest
+    container_name: kafka
+    user: "root"  # Добавляем права root для записи
+    environment:
+      - CLUSTER_ID=5L6g3nShT-eMCtK--X86sw
+      - KAFKA_NODE_ID=1
+      - KAFKA_PROCESS_ROLES=broker,controller
+      - KAFKA_LISTENERS=PLAINTEXT_HOST://:9092,PLAINTEXT_DOCKER://:9094,CONTROLLER://:9093
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT_HOST://localhost:9092,PLAINTEXT_DOCKER://kafka:9094
+      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,PLAINTEXT_DOCKER:PLAINTEXT
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT_DOCKER
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
+      - KAFKA_LOG_DIRS=/kafka/kraft-combined-logs
+    ports:
+      - "9092:9092"
+      - "9094:9094"
+    volumes:
+      - kafka_data:/kafka/kraft-combined-logs
+    networks:
+      - news-net
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - "8082:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS=kafka:9094
+      - KAFKA_CLUSTERS_0_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME=local-connect
+      - KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS=http://kafka-connect:8083
+      - KAFKA_CLUSTERS_0_METRICS_PORT=9997
+      - DYNAMIC_CONFIG_ENABLED=true
+    networks:
+      - news-net
+
+  save-service:
+    build:
+      context: .
+      dockerfile: save_service/Dockerfile
+    container_name: save-service
+    ports:
+      - "50051:50051"
+    environment:
+      - configPath=/app/config/config.yaml
+    volumes:
+      - ./save_service/config:/app/config
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - news-net
+
+  search-service:
+    build:
+      context: .
+      dockerfile: search_service/Dockerfile
+    container_name: search-service
+    ports:
+      - "50052:50052"
+    environment:
+      - configPath=/app/config/config.yaml
+      - NEWS_API_KEY=${NEWS_API_KEY}
+    volumes:
+      - ./search_service/config:/app/config
+    depends_on:
+      - redis
+      - save-service
+    networks:
+      - news-net
+
+  notify-service:
+    build:
+      context: .
+      dockerfile: notify_service/Dockerfile
+    container_name: notify-service
+    ports:
+      - "50053:50053"
+    environment:
+      - configPath=/app/config/config.yaml
+    volumes:
+      - ./notify_service/config:/app/config
+    depends_on:
+      - kafka
+      - search-service
+      - save-service
+    networks:
+      - news-net
+  
+  notification-worker:
+    build:
+      context: .
+      dockerfile: notify_service/Dockerfile.worker
+    container_name: notification-worker
+    environment:
+      - configPath=/app/config/config.yaml
+    volumes:
+      - ./notify_service/config:/app/config
+    depends_on:
+      - kafka
+      - notify-service
+    networks:
+      - news-net
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api_gateway/Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - configPath=/app/config/config.yaml
+    depends_on:
+      - save-service
+      - search-service
+      - notify-service
+    networks:
+      - news-net
+
+volumes:
+  redis_data:
+  postgres_data:
+  kafka_data:
+
+networks:
+  news-net:
+    driver: bridge

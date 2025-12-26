@@ -1,0 +1,14 @@
+save_service:
+  host: "save-service"
+  port: 50051
+
+search_service:
+  host: "search-service"
+  port: 50052
+
+notify_service:
+  host: "notify-service"
+  port: 50053
+
+http:
+  port: 8080
