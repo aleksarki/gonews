@@ -49,6 +49,7 @@ type TopHeadlinesRequest struct {
 type NewsAPIClient interface {
 	SearchEverything(ctx context.Context, req *SearchRequest) ([]*News, int, error)
 	GetTopHeadlines(ctx context.Context, req *TopHeadlinesRequest) ([]*News, int, error)
+	CheckNewArticles(ctx context.Context, keyword, lastCheckTimeStr string) ([]*News, error)
 }
 
 type CacheStorage interface {
@@ -145,8 +146,76 @@ func (s *SearchService) GetTopHeadlines(ctx context.Context, req *TopHeadlinesRe
 	return nil, 0, nil
 }
 
-func (s *SearchService) CheckNewArticles(ctx context.Context, keyword, lastCheckTime string) ([]*News, error) {
-	// Implementation for notification service
-	// todo
-	return nil, nil
+func (s *SearchService) CheckNewArticles(ctx context.Context, keyword, lastCheckTimeStr string) ([]*News, error) {
+	// Парсим строку времени в time.Time
+	var lastCheckTime time.Time
+	var err error
+
+	if lastCheckTimeStr != "" {
+		lastCheckTime, err = time.Parse(time.RFC3339, lastCheckTimeStr)
+		if err != nil {
+			// Если не удалось распарсить, используем время по умолчанию (24 часа назад)
+			lastCheckTime = time.Now().Add(-24 * time.Hour)
+		}
+	} else {
+		// Если строка пустая, используем время по умолчанию
+		lastCheckTime = time.Now().Add(-24 * time.Hour)
+	}
+
+	// Создаем запрос для поиска статей с момента lastCheckTime
+	fromTime := lastCheckTime.Format("2006-01-02T15:04:05Z")
+
+	searchReq := &SearchRequest{
+		Query:    keyword,
+		From:     fromTime,
+		SortBy:   "publishedAt", // Сортируем по дате публикации
+		PageSize: 50,            // Проверяем до 50 новых статей
+	}
+
+	// Ищем новые статьи
+	news, totalResults, err := s.newsAPI.SearchEverything(ctx, searchReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check new articles: %w", err)
+	}
+
+	if totalResults == 0 {
+		return []*News{}, nil // Нет новых статей
+	}
+
+	// Сохраняем в кэш
+	cacheKey := fmt.Sprintf("check:%s:%s", keyword, fromTime)
+	newsJSON, _ := json.Marshal(news)
+	s.cache.Set(ctx, cacheKey, string(newsJSON), 30*time.Minute)
+
+	// Сохраняем в базу через save service
+	conn, err := grpc.Dial(s.saveServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err == nil {
+		defer conn.Close()
+
+		client := pb.NewSaveServiceClient(conn)
+
+		// Конвертируем в protobuf
+		pbNews := make([]*pb.News, len(news))
+		for i, n := range news {
+			var publishedAtStr string
+			if !n.PublishedAt.IsZero() {
+				publishedAtStr = n.PublishedAt.Format(time.RFC3339)
+			}
+
+			pbNews[i] = &pb.News{
+				Source:      n.Source,
+				Author:      n.Author,
+				Title:       n.Title,
+				Description: n.Description,
+				Url:         n.URL,
+				ImageUrl:    n.ImageURL,
+				PublishedAt: publishedAtStr,
+			}
+		}
+
+		// Сохраняем новости
+		client.SaveNews(ctx, &pb.SaveNewsRequest{News: pbNews})
+	}
+
+	return news, nil
 }

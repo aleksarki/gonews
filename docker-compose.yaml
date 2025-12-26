@@ -10,7 +10,9 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - news-net
+      news-net:
+        aliases:
+          - redis
 
   postgres:
     image: postgres:15-alpine
@@ -29,8 +31,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
     networks:
-      - news-net
+      news-net:
+        aliases:
+          - postgres
 
   kafka:
     image: apache/kafka:latest
@@ -54,26 +59,16 @@ services:
       - "9094:9094"
     volumes:
       - kafka_data:/kafka/kraft-combined-logs
+    healthcheck:
+      test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9094", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
-      - news-net
-
-  kafka-ui:
-    image: provectuslabs/kafka-ui:latest
-    container_name: kafka-ui
-    depends_on:
-      - kafka
-    ports:
-      - "8082:8080"
-    environment:
-      - KAFKA_CLUSTERS_0_NAME=local
-      - KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS=kafka:9094
-      - KAFKA_CLUSTERS_0_ZOOKEEPER_CONNECT=zookeeper:2181
-      - KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME=local-connect
-      - KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS=http://kafka-connect:8083
-      - KAFKA_CLUSTERS_0_METRICS_PORT=9997
-      - DYNAMIC_CONFIG_ENABLED=true
-    networks:
-      - news-net
+      news-net:
+        aliases:
+          - kafka
 
   save-service:
     build:
@@ -90,7 +85,9 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - news-net
+      news-net:
+        aliases:
+          - save-service
 
   search-service:
     build:
@@ -108,7 +105,9 @@ services:
       - redis
       - save-service
     networks:
-      - news-net
+      news-net:
+        aliases:
+          - search-service
 
   notify-service:
     build:
@@ -126,7 +125,9 @@ services:
       - search-service
       - save-service
     networks:
-      - news-net
+      news-net:
+        aliases:
+          - notify-service
   
   notification-worker:
     build:
@@ -141,7 +142,9 @@ services:
       - kafka
       - notify-service
     networks:
-      - news-net
+      news-net:
+        aliases:
+          - notification-worker
 
   api-gateway:
     build:
@@ -153,9 +156,28 @@ services:
     environment:
       - configPath=/app/config/config.yaml
     depends_on:
-      - save-service
-      - search-service
-      - notify-service
+      save-service:
+        condition: service_started
+      search-service:
+        condition: service_started
+      notify-service:
+        condition: service_started
+    networks:
+      news-net:
+        aliases:
+          - api-gateway
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8082:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS=kafka:9094
+      - DYNAMIC_CONFIG_ENABLED=true
+    depends_on:
+      - kafka
     networks:
       - news-net
 
@@ -167,3 +189,4 @@ volumes:
 networks:
   news-net:
     driver: bridge
+    name: news-net

@@ -4,6 +4,7 @@ import (
 	"context"
 	"gonews/protos/pb"
 	"gonews/search_service/internal/services/searchService"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -20,16 +21,34 @@ func (s *GRPCServer) SearchNews(ctx context.Context, req *pb.SearchNewsRequest) 
 
 	// Convert gRPC request to service request
 	searchReq := &searchService.SearchRequest{
-		UserID:   req.UserId,
-		Query:    req.Query,
-		Sources:  *req.Sources,
-		Domains:  *req.Domains,
-		From:     *req.From,
-		To:       *req.To,
-		Language: *req.Language,
-		SortBy:   *req.SortBy,
-		PageSize: int(*req.PageSize),
-		Page:     int(*req.Page),
+		UserID: req.UserId,
+		Query:  req.Query,
+	}
+
+	// опциональные поля
+	if req.Sources != nil {
+		searchReq.Sources = *req.Sources
+	}
+	if req.Domains != nil {
+		searchReq.Domains = *req.Domains
+	}
+	if req.From != nil {
+		searchReq.From = *req.From
+	}
+	if req.To != nil {
+		searchReq.To = *req.To
+	}
+	if req.Language != nil {
+		searchReq.Language = *req.Language
+	}
+	if req.SortBy != nil {
+		searchReq.SortBy = *req.SortBy
+	}
+	if req.PageSize != nil {
+		searchReq.PageSize = int(*req.PageSize)
+	}
+	if req.Page != nil {
+		searchReq.Page = int(*req.Page)
 	}
 
 	news, totalResults, err := s.searchService.SearchNews(ctx, searchReq)
@@ -40,6 +59,11 @@ func (s *GRPCServer) SearchNews(ctx context.Context, req *pb.SearchNewsRequest) 
 	// Convert to protobuf response
 	protoNews := make([]*pb.News, len(news))
 	for i, n := range news {
+		var publishedAtStr string
+		if !n.PublishedAt.IsZero() {
+			publishedAtStr = n.PublishedAt.Format(time.RFC3339)
+		}
+
 		protoNews[i] = &pb.News{
 			Id:          n.ID,
 			Source:      n.Source,
@@ -48,7 +72,7 @@ func (s *GRPCServer) SearchNews(ctx context.Context, req *pb.SearchNewsRequest) 
 			Description: n.Description,
 			Url:         n.URL,
 			ImageUrl:    n.ImageURL,
-			PublishedAt: n.PublishedAt.Format("2006-01-02T15:04:05Z"),
+			PublishedAt: publishedAtStr,
 		}
 	}
 

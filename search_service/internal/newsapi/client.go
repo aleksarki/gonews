@@ -191,3 +191,30 @@ func (c *Client) GetTopHeadlines(ctx context.Context, req *searchService.TopHead
 
 	return news, apiResp.TotalResults, nil
 }
+
+func (c *Client) CheckNewArticles(ctx context.Context, keyword, lastCheckTimeStr string) ([]*searchService.News, error) {
+	// Парсим строку времени
+	var lastCheckTime time.Time
+	var err error
+
+	if lastCheckTimeStr != "" {
+		lastCheckTime, err = time.Parse(time.RFC3339, lastCheckTimeStr)
+		if err != nil {
+			// Если формат неверный, используем время по умолчанию
+			lastCheckTime = time.Now().Add(-24 * time.Hour)
+		}
+	} else {
+		lastCheckTime = time.Now().Add(-24 * time.Hour)
+	}
+
+	// Используем SearchEverything для проверки новых статей
+	req := &searchService.SearchRequest{
+		Query:    keyword,
+		From:     lastCheckTime.Format("2006-01-02T15:04:05Z"),
+		SortBy:   "publishedAt",
+		PageSize: 50,
+	}
+
+	n, _, e := c.SearchEverything(ctx, req)
+	return n, e
+}

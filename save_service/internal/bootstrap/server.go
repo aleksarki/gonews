@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"fmt"
 	"gonews/protos/pb"
 	"gonews/save_service/config"
 	"gonews/save_service/internal/api"
@@ -20,7 +21,7 @@ func InitGRPCServer(saveService *saveService.SaveService, cfg *config.Config) *g
 }
 
 func AppRun(grpcServer *grpc.Server, cfg *config.Config) {
-	lis, err := net.Listen("tcp", ":"+string(cfg.GRPC.Port))
+	lis, err := net.Listen("tcp", ":"+fmt.Sprint(cfg.GRPC.Port))
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
