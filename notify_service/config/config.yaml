@@ -1,0 +1,19 @@
+kafka:
+  host: "kafka"
+  port: 9094
+  notification_topic: "notification.new"
+  consumer_group: "notification-workers"
+
+grpc:
+  port: 50053
+
+save_service:
+  host: "save-service"
+  port: 50051
+
+search_service:
+  host: "search-service"
+  port: 50052
+
+scheduler:
+  check_interval_minutes: 60  # every hour

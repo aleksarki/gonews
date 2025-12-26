@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"go.yaml.in/yaml/v4"
+	"gopkg.in/yaml.v3"
 )
 
 type DatabaseConfig struct {
@@ -16,18 +16,20 @@ type DatabaseConfig struct {
 	SSLMode  string `yaml:"ssl_mode"`
 }
 
-type KafkaConfig struct {
-	Host                     string `yaml:"host"`
-	Port                     int    `yaml:"port"`
-	NofiticationNewTopicName string `yaml:"notification_new_topic_name"`
+type GRPCConfig struct {
+	Port int `yaml:"port"`
 }
 
 type Config struct {
 	Database DatabaseConfig `yaml:"database"`
-	Kafka    KafkaConfig    `yaml:"kafka"`
+	GRPC     GRPCConfig     `yaml:"grpc"`
 }
 
 func LoadConfig(filename string) (*Config, error) {
+	if filename == "" {
+		filename = "config/config.yaml"
+	}
+
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
@@ -36,7 +38,7 @@ func LoadConfig(filename string) (*Config, error) {
 	var config Config
 	err = yaml.Unmarshal(data, &config)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshall yaml: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal yaml: %w", err)
 	}
 
 	return &config, nil

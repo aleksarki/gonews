@@ -1,0 +1,176 @@
+syntax = "proto3";
+
+package news;
+
+option go_package = "gonews/internal/pb";
+
+// Save Service
+service SaveService {
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
+  rpc SaveNews(SaveNewsRequest) returns (SaveNewsResponse) {}
+  rpc GetNewsByIDs(GetNewsByIDsRequest) returns (GetNewsByIDsResponse) {}
+  rpc AddFavourite(AddFavouriteRequest) returns (AddFavouriteResponse) {}
+  rpc GetFavourites(GetFavouritesRequest) returns (GetFavouritesResponse) {}
+  rpc AddToSearchHistory(AddToSearchHistoryRequest) returns (AddToSearchHistoryResponse) {}
+  rpc GetSearchHistory(GetSearchHistoryRequest) returns (GetSearchHistoryResponse) {}
+  rpc Subscribe(SubscribeRequest) returns (SubscribeResponse) {}
+  rpc GetSubscriptions(GetSubscriptionsRequest) returns (GetSubscriptionsResponse) {}
+}
+
+// Search Service
+service SearchService {
+  rpc SearchNews(SearchNewsRequest) returns (SearchNewsResponse) {}
+  rpc GetTopHeadlines(GetTopHeadlinesRequest) returns (GetTopHeadlinesResponse) {}
+  rpc CheckNewArticles(CheckNewArticlesRequest) returns (CheckNewArticlesResponse) {}
+}
+
+// Notification Service
+service NotificationService {
+  rpc SendNotification(SendNotificationRequest) returns (SendNotificationResponse) {}
+}
+
+// Common Messages
+message News {
+  uint64 id = 1;
+  string source = 2;
+  string author = 3;
+  string title = 4;
+  string description = 5;
+  string url = 6;
+  string image_url = 7;
+  string published_at = 8;
+}
+
+message CreateUserRequest {
+  string name = 1;
+}
+
+message CreateUserResponse {
+  uint64 user_id = 1;
+}
+
+message SaveNewsRequest {
+  repeated News news = 1;
+}
+
+message SaveNewsResponse {
+  bool success = 1;
+}
+
+message GetNewsByIDsRequest {
+  repeated uint64 ids = 1;
+}
+
+message GetNewsByIDsResponse {
+  repeated News news = 1;
+}
+
+message AddFavouriteRequest {
+  uint64 user_id = 1;
+  uint64 news_id = 2;
+}
+
+message AddFavouriteResponse {
+  bool success = 1;
+}
+
+message GetFavouritesRequest {
+  uint64 user_id = 1;
+}
+
+message GetFavouritesResponse {
+  repeated News news = 1;
+}
+
+message AddToSearchHistoryRequest {
+  uint64 user_id = 1;
+  string query = 2;
+  repeated uint64 results = 3;
+}
+
+message AddToSearchHistoryResponse {
+  bool success = 1;
+}
+
+message GetSearchHistoryRequest {
+  uint64 user_id = 1;
+}
+
+message GetSearchHistoryResponse {
+  repeated string queries = 1;
+}
+
+message SubscribeRequest {
+  uint64 user_id = 1;
+  string keyword = 2;
+}
+
+message SubscribeResponse {
+  bool success = 1;
+}
+
+message GetSubscriptionsRequest {}
+
+message GetSubscriptionsResponse {
+  repeated Subscription subscriptions = 1;
+}
+
+message Subscription {
+  uint64 id = 1;
+  uint64 user_id = 2;
+  string keyword = 3;
+}
+
+// Search Service Messages
+message SearchNewsRequest {
+  uint64 user_id = 1;
+  string query = 2;
+  optional string sources = 3;
+  optional string domains = 4;
+  optional string from = 5;
+  optional string to = 6;
+  optional string language = 7;
+  optional string sort_by = 8;
+  optional int32 page_size = 9;
+  optional int32 page = 10;
+}
+
+message SearchNewsResponse {
+  repeated News news = 1;
+  int32 total_results = 2;
+}
+
+message GetTopHeadlinesRequest {
+  uint64 user_id = 1;
+  optional string country = 2;
+  optional string category = 3;
+  optional string sources = 4;
+  optional string query = 5;
+  optional int32 page_size = 6;
+  optional int32 page = 7;
+}
+
+message GetTopHeadlinesResponse {
+  repeated News news = 1;
+  int32 total_results = 2;
+}
+
+message CheckNewArticlesRequest {
+  string keyword = 1;
+  string last_check_time = 2;
+}
+
+message CheckNewArticlesResponse {
+  repeated News new_articles = 1;
+}
+
+// Notification Service Messages
+message SendNotificationRequest {
+  uint64 user_id = 1;
+  string message = 2;
+  repeated News articles = 3;
+}
+
+message SendNotificationResponse {
+  bool success = 1;
+}

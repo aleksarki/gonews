@@ -2,7 +2,6 @@ package pgstorage
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pkg/errors"
@@ -13,13 +12,13 @@ type PGStorage struct {
 }
 
 func (storage *PGStorage) InitTables() error {
-	sql := fmt.Sprintf(`
-		CREATE TABLE Users(
+	sql := `
+		CREATE TABLE IF NOT EXISTS Users(
 			id    SERIAL        PRIMARY KEY,
 			name  VARCHAR(255)  NOT NULL
 		);
 
-		CREATE TABLE News (
+		CREATE TABLE IF NOT EXISTS News (
 			id            SERIAL         PRIMARY KEY,
 			source        VARCHAR(255),
 			author        VARCHAR(255),
@@ -27,10 +26,11 @@ func (storage *PGStorage) InitTables() error {
 			description   TEXT           NOT NULL,
 			url           VARCHAR(2048)  NOT NULL,
 			image_url     VARCHAR(2048),
-			published_at  TIMESTAMP
+			published_at  TIMESTAMP,
+			UNIQUE(url)
 		);
 
-		CREATE TABLE UserToFavouriteNews (
+		CREATE TABLE IF NOT EXISTS UserToFavouriteNews (
 			id       SERIAL  PRIMARY KEY,
 			user_id  INT     NOT NULL,
 			news_id  INT     NOT NULL,
@@ -49,7 +49,7 @@ func (storage *PGStorage) InitTables() error {
 				UNIQUE (user_id, news_id)
 		);
 
-		CREATE TABLE UserToSeenNews (
+		CREATE TABLE IF NOT EXISTS UserToSeenNews (
 			id       SERIAL     PRIMARY KEY,
 			user_id  INT        NOT NULL,
 			news_id  INT        NOT NULL,
@@ -69,7 +69,7 @@ func (storage *PGStorage) InitTables() error {
 				UNIQUE (user_id, news_id)
 		);
 
-		CREATE TABLE user_subscriptions (
+		CREATE TABLE IF NOT EXISTS user_subscriptions (
 			id      SERIAL       PRIMARY KEY,
 			user_id BIGINT       NOT NULL,
 			keyword VARCHAR(100) NOT NULL,
@@ -82,7 +82,30 @@ func (storage *PGStorage) InitTables() error {
 			CONSTRAINT unique_user_subscriptions_user_keyword 
 				UNIQUE (user_id, keyword)
 		);
-	`)
+
+		CREATE TABLE IF NOT EXISTS search_history (
+			id          SERIAL      PRIMARY KEY,
+			user_id     BIGINT      NOT NULL,
+			query       TEXT        NOT NULL,
+			searched_at TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
+			
+			CONSTRAINT fk_search_history_user 
+				FOREIGN KEY (user_id) 
+				REFERENCES Users(id) 
+				ON DELETE CASCADE
+		);
+
+		CREATE TABLE IF NOT EXISTS search_results (
+			id         SERIAL  PRIMARY KEY,
+			search_id  BIGINT  NOT NULL,
+			news_ids   JSONB   NOT NULL,
+			
+			CONSTRAINT fk_search_results_search 
+				FOREIGN KEY (search_id) 
+				REFERENCES search_history(id) 
+				ON DELETE CASCADE
+		);
+	`
 	_, err := storage.DB.Exec(context.Background(), sql)
 	if err != nil {
 		return errors.Wrap(err, "table initialization error")

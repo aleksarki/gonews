@@ -9,12 +9,13 @@ import (
 
 func InitPGStorage(cfg *config.Config) *pgstorage.PGStorage {
 	connectionString := fmt.Sprintf(
-		"postgres://%s:%s@%s:%d:%s",
+		"postgres://%s:%s@%s:%d/%s?sslmode=%s",
 		cfg.Database.Username,
 		cfg.Database.Password,
 		cfg.Database.Host,
 		cfg.Database.Port,
 		cfg.Database.DBName,
+		cfg.Database.SSLMode,
 	)
 	storage, err := pgstorage.NewPgstorage(connectionString)
 	if err != nil {

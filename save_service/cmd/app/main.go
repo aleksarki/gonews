@@ -17,6 +17,9 @@ func main() {
 		panic(fmt.Sprintf("config load error: %v", err))
 	}
 
-	newsStorage := bootstrap.InitPGStorage(cfg)
-	_ = bootstrap.InitSaveService(newsStorage, cfg)
+	storage := bootstrap.InitPGStorage(cfg)
+	saveService := bootstrap.InitSaveService(storage, cfg)
+	grpcServer := bootstrap.InitGRPCServer(saveService, cfg)
+
+	bootstrap.AppRun(grpcServer, cfg)
 }
