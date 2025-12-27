@@ -1,0 +1,9 @@
+packages:
+    gonews/save_service/internal/services/saveService:
+        config:
+            dir: "save_service/internal/services/saveService/mocks"
+            filename: "news_storage.go"
+            outpkg: "mocks"
+            testonly: true
+        interfaces:
+            NewsStorage: {}
