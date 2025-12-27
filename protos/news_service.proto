@@ -162,6 +162,7 @@ message CheckNewArticlesRequest {
 
 message CheckNewArticlesResponse {
   repeated News new_articles = 1;
+  repeated UserArticleStats user_stats = 2;
 }
 
 // Notification Service Messages
@@ -171,6 +172,14 @@ message SendNotificationRequest {
   repeated News articles = 3;
 }
 
+message UserArticleStats {
+  uint64 user_id = 1;
+  int32 articles_count = 2;
+  repeated News articles = 3;
+}
+
 message SendNotificationResponse {
   bool success = 1;
+  int32 sent_count = 2;
+  string message = 3;
 }

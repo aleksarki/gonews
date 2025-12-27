@@ -16,4 +16,4 @@ search_service:
   port: 50052
 
 scheduler:
-  check_interval_minutes: 60  # every hour
+  check_interval_minutes: 1 #60  # every hour

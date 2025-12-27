@@ -1366,6 +1366,7 @@ func (x *CheckNewArticlesRequest) GetLastCheckTime() string {
 type CheckNewArticlesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	NewArticles   []*News                `protobuf:"bytes,1,rep,name=new_articles,json=newArticles,proto3" json:"new_articles,omitempty"`
+	UserStats     []*UserArticleStats    `protobuf:"bytes,2,rep,name=user_stats,json=userStats,proto3" json:"user_stats,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1403,6 +1404,13 @@ func (*CheckNewArticlesResponse) Descriptor() ([]byte, []int) {
 func (x *CheckNewArticlesResponse) GetNewArticles() []*News {
 	if x != nil {
 		return x.NewArticles
+	}
+	return nil
+}
+
+func (x *CheckNewArticlesResponse) GetUserStats() []*UserArticleStats {
+	if x != nil {
+		return x.UserStats
 	}
 	return nil
 }
@@ -1468,16 +1476,78 @@ func (x *SendNotificationRequest) GetArticles() []*News {
 	return nil
 }
 
+type UserArticleStats struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        uint64                 `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	ArticlesCount int32                  `protobuf:"varint,2,opt,name=articles_count,json=articlesCount,proto3" json:"articles_count,omitempty"`
+	Articles      []*News                `protobuf:"bytes,3,rep,name=articles,proto3" json:"articles,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UserArticleStats) Reset() {
+	*x = UserArticleStats{}
+	mi := &file_news_service_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserArticleStats) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserArticleStats) ProtoMessage() {}
+
+func (x *UserArticleStats) ProtoReflect() protoreflect.Message {
+	mi := &file_news_service_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserArticleStats.ProtoReflect.Descriptor instead.
+func (*UserArticleStats) Descriptor() ([]byte, []int) {
+	return file_news_service_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *UserArticleStats) GetUserId() uint64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *UserArticleStats) GetArticlesCount() int32 {
+	if x != nil {
+		return x.ArticlesCount
+	}
+	return 0
+}
+
+func (x *UserArticleStats) GetArticles() []*News {
+	if x != nil {
+		return x.Articles
+	}
+	return nil
+}
+
 type SendNotificationResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	SentCount     int32                  `protobuf:"varint,2,opt,name=sent_count,json=sentCount,proto3" json:"sent_count,omitempty"`
+	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SendNotificationResponse) Reset() {
 	*x = SendNotificationResponse{}
-	mi := &file_news_service_proto_msgTypes[27]
+	mi := &file_news_service_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1489,7 +1559,7 @@ func (x *SendNotificationResponse) String() string {
 func (*SendNotificationResponse) ProtoMessage() {}
 
 func (x *SendNotificationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_news_service_proto_msgTypes[27]
+	mi := &file_news_service_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1502,7 +1572,7 @@ func (x *SendNotificationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendNotificationResponse.ProtoReflect.Descriptor instead.
 func (*SendNotificationResponse) Descriptor() ([]byte, []int) {
-	return file_news_service_proto_rawDescGZIP(), []int{27}
+	return file_news_service_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *SendNotificationResponse) GetSuccess() bool {
@@ -1510,6 +1580,20 @@ func (x *SendNotificationResponse) GetSuccess() bool {
 		return x.Success
 	}
 	return false
+}
+
+func (x *SendNotificationResponse) GetSentCount() int32 {
+	if x != nil {
+		return x.SentCount
+	}
+	return 0
+}
+
+func (x *SendNotificationResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
 }
 
 var File_news_service_proto protoreflect.FileDescriptor
@@ -1623,17 +1707,27 @@ const file_news_service_proto_rawDesc = "" +
 	"\rtotal_results\x18\x02 \x01(\x05R\ftotalResults\"[\n" +
 	"\x17CheckNewArticlesRequest\x12\x18\n" +
 	"\akeyword\x18\x01 \x01(\tR\akeyword\x12&\n" +
-	"\x0flast_check_time\x18\x02 \x01(\tR\rlastCheckTime\"I\n" +
+	"\x0flast_check_time\x18\x02 \x01(\tR\rlastCheckTime\"\x80\x01\n" +
 	"\x18CheckNewArticlesResponse\x12-\n" +
 	"\fnew_articles\x18\x01 \x03(\v2\n" +
-	".news.NewsR\vnewArticles\"t\n" +
+	".news.NewsR\vnewArticles\x125\n" +
+	"\n" +
+	"user_stats\x18\x02 \x03(\v2\x16.news.UserArticleStatsR\tuserStats\"t\n" +
 	"\x17SendNotificationRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x04R\x06userId\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12&\n" +
 	"\barticles\x18\x03 \x03(\v2\n" +
-	".news.NewsR\barticles\"4\n" +
+	".news.NewsR\barticles\"z\n" +
+	"\x10UserArticleStats\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x04R\x06userId\x12%\n" +
+	"\x0earticles_count\x18\x02 \x01(\x05R\rarticlesCount\x12&\n" +
+	"\barticles\x18\x03 \x03(\v2\n" +
+	".news.NewsR\barticles\"m\n" +
 	"\x18SendNotificationResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess2\xb0\x05\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1d\n" +
+	"\n" +
+	"sent_count\x18\x02 \x01(\x05R\tsentCount\x12\x18\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage2\xb0\x05\n" +
 	"\vSaveService\x12A\n" +
 	"\n" +
 	"CreateUser\x12\x17.news.CreateUserRequest\x1a\x18.news.CreateUserResponse\"\x00\x12;\n" +
@@ -1665,7 +1759,7 @@ func file_news_service_proto_rawDescGZIP() []byte {
 	return file_news_service_proto_rawDescData
 }
 
-var file_news_service_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
+var file_news_service_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
 var file_news_service_proto_goTypes = []any{
 	(*News)(nil),                       // 0: news.News
 	(*CreateUserRequest)(nil),          // 1: news.CreateUserRequest
@@ -1694,7 +1788,8 @@ var file_news_service_proto_goTypes = []any{
 	(*CheckNewArticlesRequest)(nil),    // 24: news.CheckNewArticlesRequest
 	(*CheckNewArticlesResponse)(nil),   // 25: news.CheckNewArticlesResponse
 	(*SendNotificationRequest)(nil),    // 26: news.SendNotificationRequest
-	(*SendNotificationResponse)(nil),   // 27: news.SendNotificationResponse
+	(*UserArticleStats)(nil),           // 27: news.UserArticleStats
+	(*SendNotificationResponse)(nil),   // 28: news.SendNotificationResponse
 }
 var file_news_service_proto_depIdxs = []int32{
 	0,  // 0: news.SaveNewsRequest.news:type_name -> news.News
@@ -1704,38 +1799,40 @@ var file_news_service_proto_depIdxs = []int32{
 	0,  // 4: news.SearchNewsResponse.news:type_name -> news.News
 	0,  // 5: news.GetTopHeadlinesResponse.news:type_name -> news.News
 	0,  // 6: news.CheckNewArticlesResponse.new_articles:type_name -> news.News
-	0,  // 7: news.SendNotificationRequest.articles:type_name -> news.News
-	1,  // 8: news.SaveService.CreateUser:input_type -> news.CreateUserRequest
-	3,  // 9: news.SaveService.SaveNews:input_type -> news.SaveNewsRequest
-	5,  // 10: news.SaveService.GetNewsByIDs:input_type -> news.GetNewsByIDsRequest
-	7,  // 11: news.SaveService.AddFavourite:input_type -> news.AddFavouriteRequest
-	9,  // 12: news.SaveService.GetFavourites:input_type -> news.GetFavouritesRequest
-	11, // 13: news.SaveService.AddToSearchHistory:input_type -> news.AddToSearchHistoryRequest
-	13, // 14: news.SaveService.GetSearchHistory:input_type -> news.GetSearchHistoryRequest
-	15, // 15: news.SaveService.Subscribe:input_type -> news.SubscribeRequest
-	17, // 16: news.SaveService.GetSubscriptions:input_type -> news.GetSubscriptionsRequest
-	20, // 17: news.SearchService.SearchNews:input_type -> news.SearchNewsRequest
-	22, // 18: news.SearchService.GetTopHeadlines:input_type -> news.GetTopHeadlinesRequest
-	24, // 19: news.SearchService.CheckNewArticles:input_type -> news.CheckNewArticlesRequest
-	26, // 20: news.NotificationService.SendNotification:input_type -> news.SendNotificationRequest
-	2,  // 21: news.SaveService.CreateUser:output_type -> news.CreateUserResponse
-	4,  // 22: news.SaveService.SaveNews:output_type -> news.SaveNewsResponse
-	6,  // 23: news.SaveService.GetNewsByIDs:output_type -> news.GetNewsByIDsResponse
-	8,  // 24: news.SaveService.AddFavourite:output_type -> news.AddFavouriteResponse
-	10, // 25: news.SaveService.GetFavourites:output_type -> news.GetFavouritesResponse
-	12, // 26: news.SaveService.AddToSearchHistory:output_type -> news.AddToSearchHistoryResponse
-	14, // 27: news.SaveService.GetSearchHistory:output_type -> news.GetSearchHistoryResponse
-	16, // 28: news.SaveService.Subscribe:output_type -> news.SubscribeResponse
-	18, // 29: news.SaveService.GetSubscriptions:output_type -> news.GetSubscriptionsResponse
-	21, // 30: news.SearchService.SearchNews:output_type -> news.SearchNewsResponse
-	23, // 31: news.SearchService.GetTopHeadlines:output_type -> news.GetTopHeadlinesResponse
-	25, // 32: news.SearchService.CheckNewArticles:output_type -> news.CheckNewArticlesResponse
-	27, // 33: news.NotificationService.SendNotification:output_type -> news.SendNotificationResponse
-	21, // [21:34] is the sub-list for method output_type
-	8,  // [8:21] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	27, // 7: news.CheckNewArticlesResponse.user_stats:type_name -> news.UserArticleStats
+	0,  // 8: news.SendNotificationRequest.articles:type_name -> news.News
+	0,  // 9: news.UserArticleStats.articles:type_name -> news.News
+	1,  // 10: news.SaveService.CreateUser:input_type -> news.CreateUserRequest
+	3,  // 11: news.SaveService.SaveNews:input_type -> news.SaveNewsRequest
+	5,  // 12: news.SaveService.GetNewsByIDs:input_type -> news.GetNewsByIDsRequest
+	7,  // 13: news.SaveService.AddFavourite:input_type -> news.AddFavouriteRequest
+	9,  // 14: news.SaveService.GetFavourites:input_type -> news.GetFavouritesRequest
+	11, // 15: news.SaveService.AddToSearchHistory:input_type -> news.AddToSearchHistoryRequest
+	13, // 16: news.SaveService.GetSearchHistory:input_type -> news.GetSearchHistoryRequest
+	15, // 17: news.SaveService.Subscribe:input_type -> news.SubscribeRequest
+	17, // 18: news.SaveService.GetSubscriptions:input_type -> news.GetSubscriptionsRequest
+	20, // 19: news.SearchService.SearchNews:input_type -> news.SearchNewsRequest
+	22, // 20: news.SearchService.GetTopHeadlines:input_type -> news.GetTopHeadlinesRequest
+	24, // 21: news.SearchService.CheckNewArticles:input_type -> news.CheckNewArticlesRequest
+	26, // 22: news.NotificationService.SendNotification:input_type -> news.SendNotificationRequest
+	2,  // 23: news.SaveService.CreateUser:output_type -> news.CreateUserResponse
+	4,  // 24: news.SaveService.SaveNews:output_type -> news.SaveNewsResponse
+	6,  // 25: news.SaveService.GetNewsByIDs:output_type -> news.GetNewsByIDsResponse
+	8,  // 26: news.SaveService.AddFavourite:output_type -> news.AddFavouriteResponse
+	10, // 27: news.SaveService.GetFavourites:output_type -> news.GetFavouritesResponse
+	12, // 28: news.SaveService.AddToSearchHistory:output_type -> news.AddToSearchHistoryResponse
+	14, // 29: news.SaveService.GetSearchHistory:output_type -> news.GetSearchHistoryResponse
+	16, // 30: news.SaveService.Subscribe:output_type -> news.SubscribeResponse
+	18, // 31: news.SaveService.GetSubscriptions:output_type -> news.GetSubscriptionsResponse
+	21, // 32: news.SearchService.SearchNews:output_type -> news.SearchNewsResponse
+	23, // 33: news.SearchService.GetTopHeadlines:output_type -> news.GetTopHeadlinesResponse
+	25, // 34: news.SearchService.CheckNewArticles:output_type -> news.CheckNewArticlesResponse
+	28, // 35: news.NotificationService.SendNotification:output_type -> news.SendNotificationResponse
+	23, // [23:36] is the sub-list for method output_type
+	10, // [10:23] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_news_service_proto_init() }
@@ -1751,7 +1848,7 @@ func file_news_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_news_service_proto_rawDesc), len(file_news_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   28,
+			NumMessages:   29,
 			NumExtensions: 0,
 			NumServices:   3,
 		},
