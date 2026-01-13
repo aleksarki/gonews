@@ -355,7 +355,7 @@ func (h *Handler) healthCheck(c *gin.Context) {
 	// Проверка notification service
 	_, err = h.notificationClient.SendNotification(ctx, &pb.SendNotificationRequest{
 		UserId:  1,
-		Message: "health check",
+		Message: "test notification",
 	})
 	if err != nil {
 		health["notification_service"] = "error: " + err.Error()

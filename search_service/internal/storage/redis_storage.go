@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -30,13 +31,31 @@ func NewRedisStorage(addr string) (*RedisStorage, error) {
 }
 
 func (r *RedisStorage) Get(ctx context.Context, key string) (string, error) {
-	return r.client.Get(ctx, key).Result()
+	str, err := r.client.Get(ctx, key).Result()
+	if err != nil {
+		log.Printf("REDIS: Error while getting value '%s' by key '%s'", str, key)
+	} else {
+		log.Printf("REDIS: Got value '%s' by key '%s'", str, key)
+	}
+	return str, err
 }
 
 func (r *RedisStorage) Set(ctx context.Context, key string, value string, expiration time.Duration) error {
-	return r.client.Set(ctx, key, value, expiration).Err()
+	err := r.client.Set(ctx, key, value, expiration).Err()
+	if err != nil {
+		log.Printf("REDIS: Error while setting value '%s' by key '%s'", value, key)
+	} else {
+		log.Printf("REDIS: Set value '%s' by key '%s'", value, key)
+	}
+	return err
 }
 
 func (r *RedisStorage) Delete(ctx context.Context, key string) error {
-	return r.client.Del(ctx, key).Err()
+	err := r.client.Del(ctx, key).Err()
+	if err != nil {
+		log.Printf("REDIS: Error while deleting value by key '%s'", key)
+	} else {
+		log.Printf("REDIS: Deleted value by key '%s'", key)
+	}
+	return err
 }
